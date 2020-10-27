@@ -1,0 +1,48 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ftps
+  annotations:
+    metallb.universe.tf/address-pool: ftps-ip
+  labels:
+    app: ftps
+spec:
+  type: LoadBalancer
+  selector:
+    app: ftps
+  ports:
+  - name: ftp-data
+    port: 20
+  - name: ftp-connection
+    port: 21
+  - name: passive-mode
+    port: 40000
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftps
+  labels:
+    app: ftps
+spec:
+  selector:
+    matchLabels:
+      app: ftps
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ftps
+    spec:
+      containers:
+      - name: ftps
+        image: services_ftps
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          tcpSocket:
+            port: 21
+          initialDelaySeconds: 15
+          periodSeconds: 20

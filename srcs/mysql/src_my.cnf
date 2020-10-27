@@ -1,0 +1,10 @@
+[mysqld]
+user = $MYSQL_USER
+bind-address = 0.0.0.0
+socket=/var/lib/mysql/mysql.sock
+skip-external-locking
+skip-name-resolve
+[mysql]
+user = $MYSQL_USER
+password = $MYSQL_PASS
+socket=/var/lib/mysql/mysql.sock

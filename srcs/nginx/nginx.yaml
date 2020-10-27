@@ -1,0 +1,66 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: nginx
+  annotations:
+    metallb.universe.tf/address-pool: nginx-ip        # requesting a specific address pool
+  labels:
+    app: nginx
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx
+  ports:
+  - name: http
+    port: 80
+  - name: https
+    port: 443
+  - name: ssh
+    port: 22
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: services_nginx
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: SSH_USER
+          valueFrom:
+            secretKeyRef:
+              name: ssh-secret
+              key: user
+        - name: SSH_PASS
+          valueFrom:
+            secretKeyRef:
+              name: ssh-secret
+              key: password
+        - name: AUTOINDEX
+          valueFrom:
+            configMapKeyRef:
+              name: nginx-autoindex
+              key: autoindex
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - /tmp/liveness.sh
+          initialDelaySeconds: 15       # before performing the first probe
+          periodSeconds: 20             # kubelet will perform a liveness probe every 20 seconds
